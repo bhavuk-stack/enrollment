@@ -1,7 +1,7 @@
-package com.nttdata.hcls.enrollment.repositories;
+package com.demo.enrollment.repositories;
 
-import com.nttdata.hcls.enrollment.model.MemberId;
-import com.nttdata.hcls.enrollment.model.MemberMaster;
+import com.demo.enrollment.model.MemberId;
+import com.demo.enrollment.model.MemberMaster;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

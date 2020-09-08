@@ -1,5 +1,9 @@
-package com.nttdata.hcls.enrollment.util;
+package com.demo.enrollment.util;
 
+/**
+ * @author Bhavuk Soni
+ *
+ */
 public class ErrorType {
     private String errorMessage;
 

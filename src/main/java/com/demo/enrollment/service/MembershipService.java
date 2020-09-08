@@ -1,11 +1,16 @@
-package com.nttdata.hcls.enrollment.service;
+package com.demo.enrollment.service;
 
-import com.nttdata.hcls.enrollment.model.MemberMaster;
-import com.nttdata.hcls.enrollment.dto.MemberContext;
+import com.demo.enrollment.dto.MemberContext;
+import com.demo.enrollment.model.MemberMaster;
 
 import java.text.ParseException;
 import java.util.List;
 
+/**
+ * @author Bhavuk Soni
+ *
+ * Membership service API
+ */
 public interface MembershipService {
 
     MemberMaster createOrUpdateMember(MemberContext member) throws ParseException;

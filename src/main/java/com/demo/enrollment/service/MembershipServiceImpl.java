@@ -1,11 +1,9 @@
-package com.nttdata.hcls.enrollment.service;
+package com.demo.enrollment.service;
 
-import com.nttdata.hcls.enrollment.model.MemberAddress;
-import com.nttdata.hcls.enrollment.model.MemberId;
-import com.nttdata.hcls.enrollment.model.MemberMaster;
-import com.nttdata.hcls.enrollment.dto.MemberContext;
-import com.nttdata.hcls.enrollment.repositories.MemberAddressRepository;
-import com.nttdata.hcls.enrollment.repositories.MemberEnrollmentRepository;
+import com.demo.enrollment.dto.MemberContext;
+import com.demo.enrollment.model.MemberId;
+import com.demo.enrollment.model.MemberMaster;
+import com.demo.enrollment.repositories.MemberEnrollmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,35 +11,34 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.text.ParseException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
+/**
+ * @author Bhavuk Soni
+ * Implementation class for Membership Service
+ */
 @Service("MembershipService")
 @Transactional
 public class MembershipServiceImpl implements MembershipService{
     public static final Logger logger = LoggerFactory.getLogger(MembershipServiceImpl.class);
     @Autowired
     private MemberEnrollmentRepository repository;
-    @Autowired
-    private MemberAddressRepository addressRepository;
 
     /**
      * Method creates and updates the MemberMaster and child objects
-     * @param member
+     * @param memberCtx
      * @return
      * @throws ParseException
      */
     @Override
-    public MemberMaster createOrUpdateMember(MemberContext member) throws ParseException {
-        MemberAddress address = member.getMemberAddress();
-        MemberMaster memberMaster = member.getMemberMaster();
+    public MemberMaster createOrUpdateMember(MemberContext memberCtx) throws ParseException {
+        MemberMaster memberMaster = memberCtx.getMemberMaster();
         MemberMaster existingMemberMaster = null;
         if(memberMaster.getMemberId().getSubscriberId() != null)
         {
             logger.info("Calling into member enrollment repository");
-            existingMemberMaster = repository.findByMemberIdSubscriberId(member.getMemberMaster().getMemberId().getSubscriberId());
+            existingMemberMaster = repository.findByMemberIdSubscriberId(memberCtx.getMemberMaster().getMemberId().getSubscriberId());
             if(existingMemberMaster != null) {
                 Optional<MemberMaster> newEntity = repository.findById(existingMemberMaster.getMemberId());
                 if (newEntity.isPresent()) {
@@ -49,36 +46,18 @@ public class MembershipServiceImpl implements MembershipService{
                     updateMaster.setFirstName(memberMaster.getFirstName());
                     updateMaster.setLastName(memberMaster.getLastName());
                     updateMaster.setDateOfBirth(memberMaster.getDateOfBirth());
-                    updateMaster.setEligStat(memberMaster.getEligStat());
+                    updateMaster.setEligibilityStatus(memberMaster.getEligibilityStatus());
+                    updateMaster.setHomePhoneNumber(memberMaster.getHomePhoneNumber());
                     repository.save(updateMaster);
                     MemberMaster updatedMaster = repository.findByMemberIdSubscriberId(updateMaster.getMemberId().getSubscriberId());
-                    MemberAddress membAddress = new MemberAddress();
-                    membAddress.setPhoneNumber(address.getPhoneNumber());
-                    membAddress.setMemberMaster(updatedMaster);
-                    //update address
-                    addressRepository.save(membAddress);
                     return updatedMaster;
-
                 }
             }else {
-                MemberMaster master = new MemberMaster();
-                master.setMemberId(memberMaster.getMemberId());
-                master.setPersonNumber(memberMaster.getPersonNumber());
-                master.setFirstName(memberMaster.getFirstName());
-                master.setLastName(memberMaster.getLastName());
-                master.setDateOfBirth(memberMaster.getDateOfBirth());
-                master.setEligStat(memberMaster.getEligStat());
-                repository.save(master);
-                MemberMaster master1 = repository.findByMemberIdSubscriberId(master.getMemberId().getSubscriberId());
-
-                MemberAddress memberAddress = new MemberAddress();
-                memberAddress.setPhoneNumber(address.getPhoneNumber());
-                memberAddress.setMemberMaster(master1);
-                addressRepository.save(memberAddress);
-                repository.save(master);
-
-                MemberMaster master2 = repository.findByMemberIdSubscriberId(master.getMemberId().getSubscriberId());
-                return master2;
+                    MemberMaster master = createMemberMaster(memberCtx);
+                    master.setMemberId(memberCtx.getMemberMaster().getMemberId());
+                    return repository.saveAndFlush(master);
+                /*MemberMaster master1 = repository.findByMemberIdSubscriberId(memberCtx.getMemberId().getSubscriberId());
+                return repository.save(master);*/
             }
         }
         return existingMemberMaster;
@@ -92,6 +71,7 @@ public class MembershipServiceImpl implements MembershipService{
      */
     @Override
     public MemberMaster addMemberDependent(MemberContext memberContext, String subscriberId) {
+        logger.info("Calling addMemberDependent");
         if(memberContext.getMemberMaster().getPersonNumber() == 1){
             return null;
         }
@@ -100,22 +80,12 @@ public class MembershipServiceImpl implements MembershipService{
         if(memberMaster!=null) {
                     MemberMaster dep = repository.findPrimarySubscriber(subscriberId, memberContext.getMemberMaster().getPersonNumber());
                     if(dep == null) {
-                        MemberMaster dependentRecord = new MemberMaster();
+                        MemberMaster dependentRecord = createMemberMaster(memberContext);
                         MemberId pk = new MemberId();
                         pk.setSubscriberId(memberMaster.getMemberId().getSubscriberId());
                         dependentRecord.setMemberId(pk);
-                        dependentRecord.setFirstName(memberContext.getMemberMaster().getFirstName());
-                        dependentRecord.setLastName(memberContext.getMemberMaster().getLastName());
-                        dependentRecord.setPersonNumber(memberContext.getMemberMaster().getPersonNumber());
-                        dependentRecord.setDateOfBirth(memberContext.getMemberMaster().getDateOfBirth());
-                        dependentRecord.setEligStat(memberContext.getMemberMaster().getEligStat());
                         MemberMaster depRecord = repository.save(dependentRecord);
                         MemberMaster dependentCreated = repository.findPrimarySubscriber(subscriberId, memberContext.getMemberMaster().getPersonNumber());
-                        MemberAddress dependentAddress = new MemberAddress();
-                        dependentAddress.setPhoneNumber(memberContext.getMemberAddress().getPhoneNumber());
-                        dependentAddress.setMemberMaster(dependentCreated);
-                        addressRepository.save(dependentAddress);
-                        //create Member elig history
                         return dependentRecord;
                     }
         }
@@ -130,6 +100,7 @@ public class MembershipServiceImpl implements MembershipService{
      */
     @Override
     public MemberMaster updateDependent(MemberContext memberContext, String subscriberId) {
+        logger.info("Calling updateDependent");
         if(memberContext.getMemberMaster().getPersonNumber() == 1){
             return null;
         }
@@ -140,18 +111,8 @@ public class MembershipServiceImpl implements MembershipService{
             MemberMaster existingDependent = repository.findPrimarySubscriber(subscriberId, memberContext.getMemberMaster().getPersonNumber());
             if(existingDependent != null) {
                 //dependent exists
-                MemberMaster dependentRecord = new MemberMaster();
+                MemberMaster dependentRecord = createMemberMaster(memberContext);
                 dependentRecord.setMemberId(existingDependent.getMemberId());
-                dependentRecord.setFirstName(memberContext.getMemberMaster().getFirstName());
-                dependentRecord.setLastName(memberContext.getMemberMaster().getLastName());
-                dependentRecord.setPersonNumber(memberContext.getMemberMaster().getPersonNumber());
-                dependentRecord.setDateOfBirth(memberContext.getMemberMaster().getDateOfBirth());
-                dependentRecord.setEligStat(memberContext.getMemberMaster().getEligStat());
-                Set<MemberAddress> addressSet = new HashSet<>();
-                MemberAddress address = memberContext.getMemberAddress();
-                address.setMemberMaster(dependentRecord);
-                addressSet.add(address);
-                dependentRecord.setMemberAddressSet(addressSet);// end
                 repository.save(dependentRecord);
                 return dependentRecord;
             }
@@ -166,15 +127,9 @@ public class MembershipServiceImpl implements MembershipService{
      */
     @Override
     public void cancelEnrollment(String subscriberId) {
+        logger.info("Calling cancelEnrollment");
         List<MemberMaster> memberMastersList = repository.findAllBySubscriberId(subscriberId);
-        //delete Member Master
-        for (MemberMaster memberMaster: memberMastersList
-             ) {
-            Set<MemberAddress> addressSet = memberMaster.getMemberAddressSet();
-            addressSet.removeAll(addressSet);
-        }
-        repository.saveAll(memberMastersList);
-        repository.deleteAll(repository.findAllBySubscriberId(subscriberId));
+        repository.deleteAll(memberMastersList);
     }
 
     /**
@@ -184,20 +139,10 @@ public class MembershipServiceImpl implements MembershipService{
      */
     @Override
     public void disEnrollDependent(MemberContext memberContext, String subscriberId) {
+        logger.info("Calling disEnrollDependent");
         if(memberContext.getMemberMaster().getPersonNumber()!=1) {
             MemberMaster memberMaster = repository.findPrimarySubscriber(subscriberId, memberContext.getMemberMaster().getPersonNumber());
-            Optional<MemberMaster> savedMasterRecord = repository.findById(memberMaster.getMemberId());
-            MemberMaster savedMember = savedMasterRecord.get();
-            Set<MemberAddress> memberSet = savedMember.getMemberAddressSet();
-            MemberAddress savedAdd = null;
-            for (MemberAddress addr:memberSet
-            ) {
-                savedAdd = addr;
-            }
-            if(savedAdd!=null) {
-                savedMember.getMemberAddressSet().remove(savedAdd);
-            }
-            repository.save(savedMember);
+            repository.delete(memberMaster);
         }
 
     }
@@ -209,6 +154,7 @@ public class MembershipServiceImpl implements MembershipService{
      */
     @Override
     public MemberMaster getEnrolledMember(String subscriberId) {
+        logger.info("Calling getEnrolledMember");
        return repository.findByMemberIdSubscriberId(subscriberId);
 
     }
@@ -219,8 +165,24 @@ public class MembershipServiceImpl implements MembershipService{
      */
     @Override
     public List<MemberMaster> getAllEnrolled() {
+        logger.info("Calling getAllEnrolled");
         return repository.findAll();
     }
 
+    /**
+     *
+     * @param memberContext
+     * @return
+     */
+    private MemberMaster createMemberMaster(MemberContext memberContext) {
+        MemberMaster master = new MemberMaster();
+        master.setPersonNumber(memberContext.getMemberMaster().getPersonNumber());
+        master.setFirstName(memberContext.getMemberMaster().getFirstName());
+        master.setLastName(memberContext.getMemberMaster().getLastName());
+        master.setDateOfBirth(memberContext.getMemberMaster().getDateOfBirth());
+        master.setEligibilityStatus(memberContext.getMemberMaster().getEligibilityStatus());
+        master.setHomePhoneNumber(memberContext.getMemberMaster().getHomePhoneNumber());
+        return master;
+    }
 
 }

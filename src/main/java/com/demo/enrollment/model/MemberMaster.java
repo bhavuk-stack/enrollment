@@ -1,18 +1,20 @@
-package com.nttdata.hcls.enrollment.model;
+package com.demo.enrollment.model;
 
+import com.demo.enrollment.util.CustomDateDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.nttdata.hcls.enrollment.util.CustomDateDeserializer;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "MEMBER_MASTER")
-@NamedQuery(name = "MemberMaster.findAllBySubscriberId",query = "FROM MemberMaster WHERE memberId.subscriberId = ?1 ")
-@NamedQuery(name = "MemberMaster.findPrimarySubscriber", query = "FROM MemberMaster WHERE memberId.subscriberId = ?1 AND personNumber = ?2")
+@NamedQuery(name = "MemberMaster.findAllBySubscriberId",query = "SELECT m FROM MemberMaster m WHERE m.memberId.subscriberId = ?1 ")
+@NamedQuery(name = "MemberMaster.findPrimarySubscriber", query = "SELECT a FROM MemberMaster a WHERE a.memberId.subscriberId = ?1 AND a.personNumber = ?2")
+@NamedQuery(name = "MemberMaster.findByMemberIdSubscriberId", query = "SELECT a FROM MemberMaster a WHERE a.memberId.subscriberId = ?1")
 public class MemberMaster implements Serializable {
     @EmbeddedId
     private MemberId memberId;
@@ -27,10 +29,13 @@ public class MemberMaster implements Serializable {
     @Column(name="DATE_OF_BIRTH", nullable=false)
     @JsonDeserialize(using = CustomDateDeserializer.class)
     private java.util.Date dateOfBirth;
-    private String eligStat;
+    @NotBlank
+    @Column(name= "ELIG_STAT")
+    private String eligibilityStatus;
+    @NotBlank
+    @Column(name = "HOME_PHONE_NUMBER")
+    private String homePhoneNumber;
 
-   @OneToMany(fetch = FetchType.LAZY,mappedBy="memberMaster",cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MemberAddress> memberAddressSet;
     public void setPersonNumber(long personNumber) {
         this.personNumber = personNumber;
     }
@@ -69,20 +74,33 @@ public class MemberMaster implements Serializable {
     public void setMemberId(MemberId memberId) {
         this.memberId = memberId;
     }
-
-    public Set<MemberAddress> getMemberAddressSet() {
-        return memberAddressSet;
+    public void setEligibilityStatus(String eligibilityStatus) {
+        this.eligibilityStatus = eligibilityStatus;
     }
 
-    public void setMemberAddressSet(Set<MemberAddress> memberAddressSet) {
-        this.memberAddressSet = memberAddressSet;
+    public String getEligibilityStatus() {
+        return eligibilityStatus;
     }
 
-    public void setEligStat(String eligStat) {
-        this.eligStat = eligStat;
+    public String getHomePhoneNumber() {
+        return homePhoneNumber;
     }
 
-    public String getEligStat() {
-        return eligStat;
+    public void setHomePhoneNumber(String homePhoneNumber) {
+        this.homePhoneNumber = homePhoneNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MemberMaster that = (MemberMaster) o;
+        return personNumber == that.personNumber &&
+                memberId.getSubscriberId().equals(that.memberId.getSubscriberId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(memberId.getSubscriberId(), personNumber);
     }
 }

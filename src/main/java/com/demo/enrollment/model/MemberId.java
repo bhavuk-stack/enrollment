@@ -1,4 +1,4 @@
-package com.nttdata.hcls.enrollment.model;
+package com.demo.enrollment.model;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;

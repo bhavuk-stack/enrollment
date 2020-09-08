@@ -1,12 +1,11 @@
-package com.nttdata.hcls.enrollment.controller;
+package com.demo.enrollment.controller;
 
+import com.demo.enrollment.dto.MemberContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nttdata.hcls.enrollment.dto.MemberContext;
-import com.nttdata.hcls.enrollment.model.MemberAddress;
-import com.nttdata.hcls.enrollment.model.MemberId;
-import com.nttdata.hcls.enrollment.model.MemberMaster;
+import com.demo.enrollment.model.MemberId;
+import com.demo.enrollment.model.MemberMaster;
 
-import com.nttdata.hcls.enrollment.service.MembershipService;
+import com.demo.enrollment.service.MembershipService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -91,14 +90,9 @@ public class MembershipServiceControllerTest {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        MemberAddress address = new MemberAddress();
-        address.setPhoneNumber("123-456-7890");
-        Set<MemberAddress> memberAddressSet = new HashSet<>();
-        memberAddressSet.add(address);
-        member.setMemberAddressSet(memberAddressSet);
+
         MemberContext ctx = new MemberContext();
         ctx.setMemberMaster(member);
-        ctx.setMemberAddress(address);
         return ctx;
     }
 

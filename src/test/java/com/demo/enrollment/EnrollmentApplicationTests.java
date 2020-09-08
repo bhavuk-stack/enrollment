@@ -1,4 +1,4 @@
-package com.nttdata.hcls.enrollment;
+package com.demo.enrollment;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
