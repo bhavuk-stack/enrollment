@@ -1,0 +1,203 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /api/member/{id}:
+    get:
+      tags:
+      - membership-service-controller
+      operationId: getMemberById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/cancelEnrollment/{id}:
+    delete:
+      tags:
+      - membership-service-controller
+      operationId: deleteEnrollment
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/member/:
+    get:
+      tags:
+      - membership-service-controller
+      operationId: getAllMembers
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberMaster'
+  /api/enrollDependent/member/{id}:
+    put:
+      tags:
+      - membership-service-controller
+      operationId: addMemberDependent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberContext'
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MemberMaster'
+  /api/updateDependent/member/{id}:
+    put:
+      tags:
+      - membership-service-controller
+      operationId: updateDependent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberContext'
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MemberMaster'
+  /api/disEnrollDependent/{id}:
+    delete:
+      tags:
+      - membership-service-controller
+      operationId: disEnrollDependent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberContext'
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/member:
+    post:
+      tags:
+      - membership-service-controller
+      operationId: createOrUpdateMember
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberContext'
+      responses:
+        "200":
+          description: default response
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MemberMaster'
+components:
+  schemas:
+    MemberAddress:
+      required:
+      - phoneNumber
+      type: object
+      properties:
+        seqMembAddress:
+          type: integer
+          format: int64
+        memberMaster:
+          $ref: '#/components/schemas/MemberMaster'
+        phoneNumber:
+          type: string
+    MemberId:
+      required:
+      - seqMembId
+      - subscriberId
+      type: object
+      properties:
+        seqMembId:
+          type: integer
+          format: int64
+        subscriberId:
+          maxLength: 50
+          minLength: 0
+          type: string
+    MemberMaster:
+      required:
+      - lastName
+      - personNumber
+      type: object
+      properties:
+        memberId:
+          $ref: '#/components/schemas/MemberId'
+        personNumber:
+          type: integer
+          format: int64
+        lastName:
+          type: string
+        firstName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date-time
+        eligStat:
+          type: string
+        memberAddressSet:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberAddress'
+    MemberContext:
+      type: object
+      properties:
+        memberMaster:
+          $ref: '#/components/schemas/MemberMaster'
+        memberAddress:
+          $ref: '#/components/schemas/MemberAddress'
